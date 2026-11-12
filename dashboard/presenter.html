@@ -186,7 +186,7 @@ function render() {
 }
 
 async function loadPrompt(step) {
-  $('prompt-file').textContent = step ? `prompts/step-${step}.md` : '';
+  $('prompt-file').textContent = step ? `ada/prompts/step-${step}.md` : '';
   $('copy').hidden = !step;
   const check = (window.STAGE_PROMPT_CHECKS ?? {})[step];
   $('prompt-check').textContent = check ? `✓ Validated ${check.on}: Claude Code from step-${step - 1} → typecheck ✓, evals ${check.evals}, ${check.secs} s. Files: ${check.files}.` : '';

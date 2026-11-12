@@ -8,9 +8,9 @@ description: Review a pull request or the current diff — correctness first, th
 1. Get the diff: `gh pr diff <n> --repo <repo>` for a PR, or `git diff main...HEAD` locally. Read the changed
    files in full where the diff is not enough.
 2. Check, in this order:
-   - Correctness: wrong conditions, missing awaits, unhandled errors, state that can go stale, races.
-   - The contract: does `pnpm eval` still describe the behavior? Did the change edit `evals/` or `fixtures/` to pass?
-   - Boundaries: one fix per module, `AgentEvent` as the only event shape, model calls only in gate/runners and only via `languageModel()`.
+   - Correctness: wrong conditions, range checks, unhandled errors, stale state, races and protocol patch semantics.
+   - The contract: do `make eval` and `make test` still describe the behavior? Did the change edit `evals/` or `fixtures/` to pass?
+   - Boundaries: `Ambient.Types.Agent_Event` as the event shape, model calls through `Ambient.Models`, and protocol codecs from the sibling libraries.
    - Simplicity: dead code, duplicated helpers, needless abstractions.
 3. Verify every finding against the source before reporting it. Drop anything you cannot point to a line for.
 4. Report: **Blockers** (would break behavior) and **Suggestions**, each with `file:line` and one sentence.

@@ -1,0 +1,19 @@
+with "mcp";
+with "acp";
+with "chat_completions_api";
+with "vss_json";
+with "vss_os";
+project Ambient_Workshop is
+   for Source_Dirs use ("src", "tests");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+   for Main use ("ambient_workshop.adb", "ambient_evals.adb", "ambient_model_fixture.adb");
+   for Create_Missing_Dirs use "True";
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-gnat2022", "-gnata", "-g", "-O0", "-gnatwa");
+   end Compiler;
+   package Binder is
+      for Default_Switches ("Ada") use ("-Es");
+   end Binder;
+end Ambient_Workshop;

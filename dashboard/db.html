@@ -71,7 +71,7 @@ h2 { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacin
   <section aria-labelledby="h-map">
     <h2 id="h-map">Where everything lives</h2>
     <div class="map">
-      <div class="store sql"><h3>SQLite</h3><span class="sub" id="sql-path">.data/agent.db · node:sqlite · survives a restart</span><ul id="sql-list"></ul></div>
+      <div class="store sql"><h3>Persistent JSON</h3><span class="sub" id="sql-path">.data/agent.json · Ada · survives a restart</span><ul id="sql-list"></ul></div>
       <div class="store files"><h3>Files</h3><span class="sub">memory/ · Markdown · you can open and edit them</span><ul id="file-list"></ul></div>
       <div class="store mem"><h3>In the process</h3><span class="sub">lost on restart, rebuilt from events</span><ul id="mem-list"></ul></div>
     </div>
@@ -139,10 +139,10 @@ async function refresh() {
       const [state, thread] = await Promise.all([fetch(`http://localhost:${entry.port}/api/state`).then((r) => r.json()), fetch(`http://localhost:${entry.port}/api/thread`).then((r) => r.ok ? r.json() : { entries: [] })]);
       const entries = thread.entries ?? [];
       mem = [
-        ['the main thread', `${entries.length} entries`, 'your messages, its answers and its reports (src/thread.ts)'],
-        ['the conversation', `${entries.filter((e) => e.kind === 'you').length} of your messages`, 'what the model sees next turn (src/chat.ts); trimmed to 24 at step 8'],
+        ['the main thread', `${entries.length} entries`, 'your messages, its answers and its reports (ada/src/ambient-engine.adb)'],
+        ['the conversation', `${entries.filter((e) => e.kind === 'you').length} of your messages`, 'what the model sees next turn (ada/src/ambient-engine.adb); trimmed to 24 at step 8'],
         ['the event feed', `${(state.events ?? []).length} events`, 'every event and what happened to it, for the dashboards'],
-        ['the inbox', `${state.stats?.merged ?? 0} merged`, 'busy subjects and the 5-minute window (src/inbox.ts)'],
+        ['the inbox', `${state.stats?.merged ?? 0} merged`, 'busy subjects and the 5-minute window (ada/src/ambient-engine.adb)'],
         ['open asks', `${(state.asks ?? []).length} waiting`, 'questions waiting for your Yes or No (step 6)'],
       ].map(([k, v, why]) => `<li><b>${k}</b><span class="n">${v}</span><small>${why}</small></li>`).join('');
     } catch { mem = '<li class="muted">The agent did not answer.</li>'; }

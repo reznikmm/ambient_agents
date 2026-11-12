@@ -1,215 +1,138 @@
-# Agents that work while you don't
+# Ambient agents workshop in Ada
 
-> A hands-on workshop: build an AI agent from an empty stub, then take its prompt away and teach it to work on
-> its own. It watches a GitHub repo and a clock, decides what is worth doing, does it, and bothers you only when
-> it should. Nine git tags, eight prompts, six evals that turn green one by one.
+The workshop runtime is ported to Ada 2022, using the sibling `mcp/`, `acp/`
+and `chat_completions_api/` libraries. The browser app and presentation pages
+remain HTML/JavaScript. Node, TypeScript, and pnpm are unnecessary for the Ada runtime.
+The original TypeScript sources, fixtures, and tags are retained as a reference;
+[their workshop guide is here](README-typescript.md).
 
-```
-you ─▶ chat ─▶ agent (model + tools + loop)                                        step 1
-github ─▶ webhook / poll ─▶ one event shape                                         step 2
-events ─▶ prefilter ─▶ gate ─▶ inbox ─▶ worker sessions ─▶ policy ─▶ you / 09:00 digest   steps 3–7
-                                              └──▶ memory/*.md ◀── one chat         step 8
-```
-
-## The story
-
-Meet **the agent**. It joins your team on a Monday, and its job is to look after a busy GitHub repo: CI breaks,
-issues pile up, bots comment, people say "+1". You are its manager.
-
-On Monday it can only chat. By Tuesday it can hear GitHub. On Wednesday you tell it "watch the repo" and it does
-exactly that, all of it, at once, and your notifications explode. The rest of the week is spent turning that
-eager intern into a colleague you would trust: one who ignores noise, notices that five alerts are one problem,
-works on each thing in its own session, asks before it does anything risky, comes back later to check, and
-remembers what you told it.
-
-Every day of the week is one **step**. Each step is a git tag with a prompt you paste into your coding agent
-(Claude Code, Codex, Cursor…), and a set of evals that tells you, without opinion, whether the agent got
-better.
-
-## Before you start
-
-- **Node 22.13+** and **pnpm**.
-- **A coding agent.** The prompts are written for Claude Code, but any agent that edits files works. Each
-  worktree gets `CLAUDE.md` / `AGENTS.md` with the map of the code, the APIs to get right and the common problems.
-- **An LLM key** for the chat (step 1 on): `OPENROUTER_API_KEY` or Vercel's `AI_GATEWAY_API_KEY`. Without one,
-  everything else still runs: events, the gate (in rules mode), workers and evals are simulated.
-- Optional: a decision model for the gate (Clef on Cloudflare Workers AI, or Jev), `GITHUB_REPO` to hear a real
-  repo, `SLACK_WEBHOOK_URL` for real pings, `DAYTONA_API_KEY` for memory in a sandbox. All of them are in
-  `.env.example`, with a comment each.
-
-```bash
-git clone https://github.com/yavorsky/ambient-agents-workshop.git
-cd ambient-agents-workshop
-pnpm install
-cp .env.example .env        # then fill in what you have; every key is optional
+```text
+chat -> Chat_Completions_API -> tools -> main thread
+GitHub / simulator / clock -> prefilter -> gate -> inbox
+  -> per-signal sessions -> policy -> thread / 09:00 UTC digest
+                                  -> Markdown memory
+MCP stdio -> the same tools        ACP v2 -> external worker agent
 ```
 
-## Your workbench
+## Build and run
 
-You build in a **worktree** of your own, so the main checkout stays clean and you can always jump to a prepared
-step. Worktrees live next to the repo (`../ambient-agents-workshop-wt/<name>`) and share its `node_modules` and
-`.env`. Each runs its own agent, with its own port, database and app.
+The launch scripts target Linux. Requires Alire with GNAT supporting Ada 2022,
+Bash, GNU `timeout`, and `curl`.
+Tests additionally use `jq`, `rg`, and OpenSSL. Real GitHub polling uses `gh`.
+The three sibling libraries must be next to this repository; Alire pins them
+locally and resolves their VSS dependencies.
 
-```bash
-pnpm wt new build step-0       # your worktree, at the very beginning
-pnpm wt claude build           # Claude Code inside it
-pnpm wt start build            # (re)start the agent you built; prints its URL (http://localhost:41xx)
-pnpm wt eval build             # the six evals against your code
-pnpm wt reset build step-4     # stuck? jump to the prepared step-4 and carry on from there
-pnpm wt logs build             # what the agent is doing right now
-pnpm wt rm build               # when you are done
+```sh
+make build
+make eval                    # unchanged 60-event fixture, six Ada evaluations
+make test                    # all nine steps and offline integration tests
+./ada/run.sh                 # http://127.0.0.1:4100
 ```
 
-The loop for every step is the same:
+Without model credentials the simulator, rules gate, policy, timers, memory,
+webhooks, and evaluations work. For chat, copy `.env.ada.example` to `.env.ada`
+and configure an OpenAI-compatible endpoint and model. The launch scripts source
+that file; direct binary invocations use exported environment variables.
 
-1. Read the chapter below.
-2. Paste `prompts/step-N.md` into your coding agent inside the worktree.
-3. `pnpm wt start build`, open the app, poke it, hit **Storm** to send it a burst of events.
-4. `pnpm wt eval build`. The chapter says how many should pass. Red cases print what is still wrong.
+```sh
+CHAT_COMPLETIONS_URL=http://127.0.0.1:8080/v1/chat/completions \
+CHAT_MODEL=local-model ./ada/run.sh
 
-Don't edit `evals/` or `fixtures/` to make a case pass: the evals are the referee.
-
-## The week
-
-### Step 0 · The empty desk
-
-```bash
-pnpm wt new build step-0
+WORKER_MODE=model ./ada/run.sh    # structured planning, no worker tools
+WORKER_MODE=acp ACP_AGENT=/absolute/path/to/adapter ./ada/run.sh
+./ada/run.sh --mcp               # newline-delimited MCP on stdin/stdout
+./ada/run.sh --replay fixtures/storm.json
 ```
 
-Everything around the agent already exists: the event sources, a simulator that can throw a storm of 60 GitHub
-events at it, the app with its main thread, the evals. The agent itself is a stub that politely says it is not
-built yet. Open the app and look around. **Evals: 0/6.** That is the to-do list.
+`OPENAI_API_KEY`, `OPENROUTER_API_KEY`, and `AI_GATEWAY_API_KEY` are supported.
+An explicit `CHAT_COMPLETIONS_URL` takes precedence. `CHAT_MODEL`, `GATE_MODEL`,
+and `WORKER_MODEL` select models. `GATE_MODE` is `rules`, `model`, or `decision`;
+the latter supports Jev, Clef, and Clef-Flash and falls back to model/rules.
+Provider keys and model access are unnecessary for tests.
 
-### Step 1 · Monday: it can talk · `prompts/step-1.md`
+## Run the talk
 
-You write the agent: a model, a few tools (read files, search, `gh` reads) and a loop that lets it call tools
-until it has an answer. One conversation, which becomes **the main thread**: the place it will later report into
-on its own. Ask it about the repo and watch it use its tools. **Evals: 0/6** (it can't hear anything yet).
-
-### Step 2 · Tuesday: it can hear · `prompts/step-2.md`
-
-GitHub learns to reach it: signed webhooks (it checks the HMAC signature and rejects forgeries) and polling for
-when your laptop has no public URL. Whatever arrives becomes one `AgentEvent` shape. The agent only records
-events for now. With `pnpm dashboard` running in another terminal (it holds the webhook secret), try
-`pnpm webhook build issue` (expect 202), then `pnpm webhook build issue --bad`, a forgery that should get a 401.
-**Evals: 0/6.**
-
-### Step 3 · Wednesday: chaos · `prompts/step-3.md`
-
-You say "watch the repo" and wire every event straight to a worker. Hit **Storm**. Every bot comment, every
-"+1", every edit wakes the agent, five CI failures start five workers, and the thread fills with reports nobody
-asked for. This is the naive version, and it is what most "agent with a webhook" demos really are. Take a good
-look: the next four steps fix exactly what you see here. **Evals: 0/6, but now they fail for real reasons.**
-
-### Step 4 · Thursday morning: it learns to ignore · `prompts/step-4.md`
-
-Two fixes. A **prefilter** in plain code drops what never needs a brain: bots, edits, green builds, its own
-posts. Then a **gate** asks, for each event that is left, "act, ignore or ask?", and checks it against your
-watches. The gate is a cascade: a decision model answers in milliseconds with a probability; only unsure events
-go to an LLM; with no keys at all it uses rules. Every drop gets a reason you can read. **Evals: 2/6** (noise,
-cost).
-
-### Step 5 · Thursday afternoon: five alerts, one problem · `prompts/step-5.md`
-
-The same CI failure arriving five times is one problem, not five. Events get a **subject key** (`ci:main`,
-`issue:42`), repeats that arrive while one is being handled merge into it, and the thread groups its reports by
-subject. **Evals: 3/6** (duplicates).
-
-### Step 6 · Friday: its own desk for each job, and manners · `prompts/step-6.md`
-
-Each signal gets **one session** that remembers what it already did, instead of a fresh worker every time. A
-**policy** decides what you hear: act on what is safe, draft what needs your eyes, **ask** with Yes/No buttons
-before anything risky, and stay within the ping budget in `memory/preferences.md` ("at most 3 pings a day").
-**Evals: 5/6** (sessions, pings).
-
-### Step 7 · The weekend: it comes back later · `prompts/step-7.md`
-
-A red CI that is "being looked at" should be looked at again. The agent books its **own wakeups** ("check this
-again in 30 minutes"), keeps your reminders, and sends a 09:00 digest of what waited. Use **+10 min** to move
-the agent's clock instead of waiting. **Evals: 6/6.** 🎉
-
-### Step 8 · Next Monday: it remembers · `prompts/step-8.md`
-
-The final touch: **memory as Markdown files** (local by default, or a Daytona sandbox with `DAYTONA_API_KEY`
-and `pnpm wt memory build daytona`). Every result is written down; the chat sees a short index and opens a file
-only when it needs one, so the conversation stays short and the agent still knows what happened last week.
-**Evals: 6/6**, with a much shorter chat.
-
-## Before and after
-
-Run the Wednesday agent and the finished one side by side and storm them both:
-
-```bash
-pnpm wt new naive step-3
-pnpm wt new finished step-8
-pnpm dashboard                 # http://localhost:4000/dashboard: "Storm all" sends the same events to both
+```sh
+make start                   # naive :4101, finished :4102, stage :4103,
+                             # presentation/dashboard :4000
+make stop
 ```
 
-The dashboard draws every event as it flows through each agent, counts workers, pings and model calls, and
-plays music that follows the load (sound is off until you press it). The left side gets loud. The right side
-stays calm.
+Each process has separate state and memory under `.data/ada/`. The stage's
+**Load step-N** control selects behavior in the Ada program and resets its
+runtime state; it does not check out old TypeScript tags or discard source edits.
+The stage evaluates the selected step using the Ada evaluation executable.
 
-## When something looks wrong
+| Step | Behavior added | Passing evaluations |
+|---|---|---|
+| 0–2 | Scaffolding, chat, GitHub input | 0/6 |
+| 3 | Every event starts work | 0/6 |
+| 4 | Prefilter and watch gate | 2/6 |
+| 5 | Duplicate IDs and five-minute subject/kind suppression | 3/6 |
+| 6 | Signal sessions, policy, ping budget, Yes/No answers | 5/6 |
+| 7 | Wakeups, reminders, daily digest | 6/6 |
+| 8 | Worker results in Markdown memory | 6/6 |
 
-| You see | Why | Fix |
-|---------|-----|-----|
-| the chat says "I am not built yet" | you are on step 0 | do step 1, or `pnpm wt reset build step-1` |
-| "heard it; no pipeline yet" | step 1 or 2: nothing processes events yet | step 3 or later |
-| "no watch matches" | the event is about nothing you watch | add a watch in the app, or use the Cat PR / New issue buttons |
-| a CI failure stops at the inbox, "joined ci:main" | the same subject arrived within 5 minutes (agent clock), so it merged | **+10 min** or reset; that is step 5 working |
-| `clef 429` in a log | the Workers AI free quota | nothing: the gate falls back to the LLM |
-| a new GitHub issue never arrives | the first poll only records what already exists, or `GITHUB_REPO` is unset | open a new issue; check `.env` |
-| typecheck: unused parameter | strict mode | prefix it with `_` |
-| fewer evals than the chapter says | the step isn't finished | read the failing case: it names the number that is off |
-| everything is tangled | it happens | `pnpm wt reset build step-N` and carry on from the prepared step |
+Ada exercises are in `ada/prompts/`. You can also select a step with
+`WORKSHOP_STEP=0..8`, or `POST /api/step` with `{"step":4}`. The original
+`prompts/`, `pnpm` commands, and worktree scripts still describe the TypeScript
+reference.
 
-`pnpm typecheck && pnpm eval` in any checkout is the definition of done.
+## Protocols and state
 
-## Running it as a talk
+- **Chat Completions:** typed requests and responses through your library;
+  up to ten model/tool turns, with recent conversation kept at user boundaries.
+  Responses use the app's NDJSON format. The library currently returns whole
+  completions, so token-by-token streaming is unavailable.
+- **MCP:** the `2026-07-28` draft pinned by `mcp/`, including `server/discover`,
+  `tools/list`, and `tools/call`. Requests carry protocol version and client
+  capabilities in `_meta`, as in the library demos. The catalog exposes checkout
+  reads/search, GitHub reads, skills, watches, reminders, and memory tools.
+  `github_comment` is enabled only with `CHAT_CAN_COMMENT=1` and `GITHUB_REPO`.
+- **ACP:** the v2 draft pinned by `acp/`. One external adapter process maintains
+  sessions by signal. The client waits for idle after prompt acceptance, assembles
+  message chunks and replacement updates, resumes stored sessions after restart,
+  and declines permission requests. Adapter installation is documented in the
+  sibling `acp/demos/claude/` and `acp/demos/codex/` guides. `ACP_AGENT` must be an
+  executable; use a wrapper for arguments and adapter-specific environment.
+  `WORKER_MODE=claude` is an alias for ACP; `auto` uses ACP for GitHub events and
+  simulates other events.
+- **GitHub:** HMAC-SHA256 webhook verification is native Ada, including ping
+  deliveries. Polling bootstraps existing items and shares event IDs with webhooks.
+- **Persistence:** `.data/agent.json` is replaced atomically. It stores sessions,
+  duplicate IDs, handled times, pending approvals, notifications, wakeups, and the
+  main thread. It is separate from the TypeScript SQLite database. UTC is used
+  for daily budgets and the 09:00 digest. `STATE_PATH` and `MEMORY_DIR` override
+  locations. A state file belongs to one process.
 
-The repo is also the slides. `pnpm start` sets up everything from any state: a naive agent (step 3), a finished
-one (step 8), a `stage` worktree at step 1 for live coding, and the dashboard on http://localhost:4000. `pnpm
-stop` stops it all.
+The runtime serializes event processing and worker turns. This preserves subject
+ordering and bounds worker activity, but a slow model/ACP turn also delays HTTP
+requests. Simulated workers finish immediately; `SIM_SPEED` scales gate batching.
+Memory is local Markdown; the TypeScript Daytona SDK integration is not included.
+Presentation decision races execute requests serially and report measured elapsed
+times; they are demonstrations, not parallel throughput benchmarks. The decision
+page retains the reference's Clef price estimates; it does not fetch live prices.
 
-- `/` the start page and run sheet · `/stage` the slides · `/presenter` notes, timer and prompts ·
-  `/dashboard` naive vs stage · `/decisions` decision models explained, with a playground · `/db` what the agent
-  stores.
-- On a step slide, **Load step-N** moves the stage worktree to that tag, **Storm** runs the 60 events,
-  **Run evals** shows the cases. `L` undoes your live edits. Slide text lives in `dashboard/stage-chapters.js`.
-- `pnpm rehearse` loads every step, storms it and checks each fix (needs the dashboard running).
-- `pnpm live` runs the real agent on this repo: real issues and PRs, answered by Claude Code
-  (`LIVE_GH_TOKEN` in `.env`).
+## Source map
 
-## Skills
+| Ada unit | Responsibility |
+|---|---|
+| `Ambient.Engine` | Event pipeline, inbox, sessions, policy, timers, tools, chat |
+| `Ambient.Types` | Normalized events, worker results, statistics |
+| `Ambient.State` | Atomic JSON store, watches, Markdown memory |
+| `Ambient.Models` | Chat Completions client and curl HTTP transport |
+| `Ambient.ACP_Client` | Typed ACP v2 stdio client and streamed session updates |
+| `Ambient.MCP_Server` | Typed MCP dispatch sharing the chat tool catalog |
+| `Ambient.Sources` | Signed GitHub webhooks, poller, simulator |
+| `Ambient.Decisions` | Decision providers and presentation playground |
+| `Ambient.Server` | Loopback HTTP API, SSE, dashboard and stage routes |
+| `Ambient.JSON`, `Ambient.Codecs` | VSS JSON and generated protocol codec adapters |
 
-The repo ships the skills the talk shows, edited in `.ruler/skills/` and synced to Claude Code, Codex, Cursor and
-OpenCode with `pnpm ruler`.
+Ada presentation chapters and the start page are in `ada/app/`; they reuse the
+browser rendering code in `dashboard/`.
 
-| Skill | For |
-|-------|-----|
-| `worktree` | Worktrees with their own instance, port and database |
-| `dashboard` | The central view over every instance |
-| `simulate` | Storm, scenarios, fixture replay, clock |
-| `dj` | Writes `dj/pattern.json` from live stats; the dashboard plays it |
-| `triage-issue`, `fix-ci`, `code-review` | What the worker does for each signal (`claude -p "/code-review #42"`) |
-| `preflight` | Type-check, evals and a blockers-only review in parallel before a push |
-| `proposal` | A one-page HTML plan or explainer with a picture per section |
-| `pr-review` | Checks out a PR in a worktree, runs the checks, posts one review with inline comments |
-| `pr-description` | Title and description from the real diff: why, what, how it was checked, what was not |
-| `babysit` | Watches a PR's CI, fixes what it broke, reruns flakes once, rebases, stops when it is mergeable |
-| `add-signal` | Adds a new event source or signal end to end, with an eval that proves it |
-| `launch-video` | Records a demo video of the real UI with captions and the dashboard's music |
-
-## Where things are
-
-| Path | What |
-|------|------|
-| `src/chat.ts` | the agent: model, tools, loop; the main thread |
-| `src/sources/` | GitHub (webhooks, polling) and the simulator |
-| `src/prefilter.ts`, `gate.ts`, `inbox.ts`, `worker.ts`, `policy.ts`, `timers.ts`, `memory.ts` | one fix each |
-| `src/pipeline.ts` | ingest → prefilter → batch → gate → inbox → worker → policy → deliver |
-| `prompts/step-N.md` | the prompt for each step |
-| `evals/run.ts`, `fixtures/storm.json` | the six cases and the 60-event storm they replay |
-| `dashboard/` | the talk: slides, presenter view, dashboard, decision-model pages |
-| `memory/` | your watches and preferences, in plain Markdown |
+`make format` formats only this project's Ada sources. `make test` checks all
+step scores and exercises HTTP, signatures, approval answers, Unicode memory,
+path confinement, persistence, SSE, MCP, ACP permissions/session reuse, and a
+Chat Completions tool round trip against local fixtures. It never calls a live
+model or posts to GitHub/Slack. The original `evals/` and `fixtures/` are unchanged.

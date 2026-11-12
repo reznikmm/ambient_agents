@@ -1063,7 +1063,7 @@ function renderChapter() {
 function renderAll() { drawPipeline(); renderLive(); }
 
 async function loadPrompt(step) {
-  $('prompt-file').textContent = step ? `prompts/step-${step}.md` : '';
+  $('prompt-file').textContent = step ? `ada/prompts/step-${step}.md` : '';
   $('copy-btn').hidden = !step;
   if (!step) { $('prompt').textContent = 'No prompt for this chapter.'; return; }
   try { $('prompt').textContent = (await req(`/api/stage/prompt?step=${step}`)).text; } catch { $('prompt').textContent = 'Prompt not found.'; }

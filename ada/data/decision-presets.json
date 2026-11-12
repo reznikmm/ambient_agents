@@ -1,0 +1,443 @@
+{
+  "questions": {
+    "action": {
+      "type": "choice",
+      "instructions": "Should the ambient engineering agent act, ignore this as noise, or ask a human before doing destructive work?",
+      "criteria": {
+        "act": "Real work: a new issue, red CI, or a real question",
+        "ignore": "Noise or a reaction that adds no work",
+        "ask": "A destructive request: deleting, force pushing, or rotating keys"
+      }
+    },
+    "ci": {
+      "type": "noul",
+      "instructions": "Is this event about CI, builds, tests, or pipelines?"
+    },
+    "issues": {
+      "type": "noul",
+      "instructions": "Is this event about an issue, bug report, or question?"
+    },
+    "prs": {
+      "type": "noul",
+      "instructions": "Is this event about pull requests or code review?"
+    }
+  },
+  "examples": [],
+  "providers": [
+    "jev",
+    "clef",
+    "clef-flash"
+  ],
+  "storm": [
+    {
+      "id": "ci-9001",
+      "state": {
+        "kind": "ci_failed",
+        "from": "github-actions",
+        "subject": "ci:main",
+        "title": "CI failed on main: test (inbox.test.ts)",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "ci"
+      }
+    },
+    {
+      "id": "ci-9002",
+      "state": {
+        "kind": "ci_failed",
+        "from": "github-actions",
+        "subject": "ci:main",
+        "title": "CI failed on main (re-run 1)",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "ci"
+      }
+    },
+    {
+      "id": "ci-9003",
+      "state": {
+        "kind": "ci_failed",
+        "from": "github-actions",
+        "subject": "ci:main",
+        "title": "CI failed on main (re-run 2)",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "ci"
+      }
+    },
+    {
+      "id": "ci-9004",
+      "state": {
+        "kind": "ci_failed",
+        "from": "github-actions",
+        "subject": "ci:main",
+        "title": "CI failed on main (re-run 3)",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "ci"
+      }
+    },
+    {
+      "id": "ci-9005",
+      "state": {
+        "kind": "ci_failed",
+        "from": "github-actions",
+        "subject": "ci:main",
+        "title": "CI failed on main (re-run 4)",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "ci"
+      }
+    },
+    {
+      "id": "issue-10",
+      "state": {
+        "kind": "issue_opened",
+        "from": "lena",
+        "subject": "demo/app#10",
+        "title": "Issue #10: Docs typo in README",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-11",
+      "state": {
+        "kind": "issue_opened",
+        "from": "omar",
+        "subject": "demo/app#11",
+        "title": "Issue #11: Timeout on large repos",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-12",
+      "state": {
+        "kind": "issue_opened",
+        "from": "maria",
+        "subject": "demo/app#12",
+        "title": "Issue #12: Crash on empty config",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-13",
+      "state": {
+        "kind": "issue_opened",
+        "from": "sam",
+        "subject": "demo/app#13",
+        "title": "Issue #13: Login broken on Safari",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-14",
+      "state": {
+        "kind": "issue_opened",
+        "from": "lena",
+        "subject": "demo/app#14",
+        "title": "Issue #14: Docs typo in README",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-15",
+      "state": {
+        "kind": "issue_opened",
+        "from": "omar",
+        "subject": "demo/app#15",
+        "title": "Issue #15: Timeout on large repos",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-16",
+      "state": {
+        "kind": "issue_opened",
+        "from": "maria",
+        "subject": "demo/app#16",
+        "title": "Issue #16: Crash on empty config",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "issue-17",
+      "state": {
+        "kind": "issue_opened",
+        "from": "sam",
+        "subject": "demo/app#17",
+        "title": "Issue #17: Login broken on Safari",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "pr-50",
+      "state": {
+        "kind": "pr_opened",
+        "from": "lena",
+        "subject": "demo/app#50",
+        "title": "Fix #10",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "prs"
+      }
+    },
+    {
+      "id": "pr-51",
+      "state": {
+        "kind": "pr_opened",
+        "from": "lena",
+        "subject": "demo/app#51",
+        "title": "Fix #11",
+        "body": null
+      },
+      "expected": {
+        "action": "act",
+        "signal": "prs"
+      }
+    },
+    {
+      "id": "pr-52",
+      "state": {
+        "kind": "pr_opened",
+        "from": "lena",
+        "subject": "demo/app#52",
+        "title": "Add a cat of the day to the welcome page",
+        "body": "Shows a random cat photo and a cat fact on first visit."
+      },
+      "expected": {
+        "action": "act",
+        "signal": "prs"
+      }
+    },
+    {
+      "id": "q-10",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#10",
+        "title": "Is there a workaround?",
+        "body": "Is there a workaround until this is fixed?"
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "q-12",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#12",
+        "title": "Is there a workaround?",
+        "body": "Is there a workaround until this is fixed?"
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "q-14",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#14",
+        "title": "Is there a workaround?",
+        "body": "Is there a workaround until this is fixed?"
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "q-15",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#15",
+        "title": "Is there a workaround?",
+        "body": "Is there a workaround until this is fixed?"
+      },
+      "expected": {
+        "action": "act",
+        "signal": "issues"
+      }
+    },
+    {
+      "id": "react-0",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ivan",
+        "subject": "demo/app#10",
+        "title": "+1",
+        "body": "+1"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-1",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#11",
+        "title": "same here",
+        "body": "same here"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-2",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ola",
+        "subject": "demo/app#12",
+        "title": "thanks!",
+        "body": "thanks!"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-3",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ivan",
+        "subject": "demo/app#13",
+        "title": "+1",
+        "body": "+1"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-4",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#14",
+        "title": "👍",
+        "body": "👍"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-5",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ola",
+        "subject": "demo/app#15",
+        "title": "me too",
+        "body": "me too"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-6",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ivan",
+        "subject": "demo/app#16",
+        "title": "+1",
+        "body": "+1"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-7",
+      "state": {
+        "kind": "issue_comment",
+        "from": "chen",
+        "subject": "demo/app#17",
+        "title": "same here",
+        "body": "same here"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-8",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ola",
+        "subject": "demo/app#10",
+        "title": "thanks!",
+        "body": "thanks!"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    },
+    {
+      "id": "react-9",
+      "state": {
+        "kind": "issue_comment",
+        "from": "ivan",
+        "subject": "demo/app#11",
+        "title": "+1",
+        "body": "+1"
+      },
+      "expected": {
+        "action": "ignore"
+      }
+    }
+  ]
+}

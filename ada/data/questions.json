@@ -1,0 +1,6 @@
+{
+  "action": {"type":"choice","instructions":"Should the ambient engineering agent act, ignore this as noise, or ask a human before doing destructive work?","criteria":{"act":"Real work: a new issue, red CI, or a real question","ignore":"Noise or a reaction that adds no work","ask":"A destructive request: deleting, force pushing, or rotating keys"}},
+  "ci": {"type":"noul","instructions":"Is this event about CI, builds, tests, or pipelines?"},
+  "issues": {"type":"noul","instructions":"Is this event about an issue, bug report, or question?"},
+  "prs": {"type":"noul","instructions":"Is this event about pull requests or code review?"}
+}

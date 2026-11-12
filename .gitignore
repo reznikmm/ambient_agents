@@ -16,3 +16,10 @@ memory/subjects/
 # launch-video skill output
 video/raw/
 video/segments/
+
+# Ada build outputs and instance configuration
+ada/alire/
+ada/config/
+ada/obj/
+ada/bin/
+.env.ada

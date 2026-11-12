@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ambient agents · Ada workshop</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#10151d;color:#e9edf4}body{max-width:1050px;margin:auto;padding:48px 24px 80px}h1{font-size:clamp(2rem,5vw,3.6rem);letter-spacing:-.04em;margin:12px 0}p{line-height:1.6;color:#aab9cb;max-width:75ch}a{color:#89d2bf}code{font-family:monospace;background:#1d2836;padding:3px 6px;border-radius:4px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:32px 0}.card{display:block;border:1px solid #334256;border-radius:12px;padding:22px;text-decoration:none;background:#17202b}.card b{font-size:1.2rem;color:#e9edf4}.card p{margin-bottom:0}li{line-height:1.8;margin:6px 0}section{margin-top:36px}small{color:#7c92ad}
+</style>
+</head>
+<body>
+<small>ADA 2022 · MCP · ACP · CHAT COMPLETIONS</small>
+<h1>Agents that work while you don’t</h1>
+<p>Build an ambient agent from chat, GitHub signals and a clock. Watch a storm overwhelm the naive agent, then add filtering, watches, sessions, policy, timers and memory.</p>
+<nav class="cards">
+<a class="card" href="/stage"><b>Present the workshop →</b><p>Ada examples, step controls, storm and evaluations.</p></a>
+<a class="card" href="/presenter"><b>Presenter view →</b><p>Notes, commands and a timer synchronized with the stage.</p></a>
+<a class="card" href="/dashboard"><b>Compare agents →</b><p>Naive, finished and stage instances. Replay the same storm.</p></a>
+<a class="card" href="/chat?instance=stage"><b>Talk to the stage agent →</b><p>Chat, standing watches, reports, approvals and Markdown memory.</p></a>
+<a class="card" href="/db?instance=stage"><b>Inspect state →</b><p>Persistent JSON records, runtime context and memory files.</p></a>
+<a class="card" href="/decisions"><b>Decision playground →</b><p>Compare rules, decision providers and a model. Requests execute serially.</p></a>
+</nav>
+<section><h2>Running instances</h2><ul id="instances"><li>Loading…</li></ul></section>
+<section><h2>Run sheet</h2><ol>
+<li>Start with <code>make start</code>. Stop with <code>make stop</code>.</li>
+<li>Open the stage and presenter in the same browser. Load each step with <kbd>L</kbd>.</li>
+<li>Use Storm, then run the evaluations with <kbd>E</kbd>. Expected scores are 0, 2, 3, 5 and finally 6 of 6.</li>
+<li>For chat, configure an OpenAI-compatible endpoint in <code>.env.ada</code>. Simulation and evaluations need no credentials.</li>
+<li>Step loading resets runtime state while preserving source edits. Ada exercises live in <code>ada/prompts/</code>.</li>
+</ol><p>The original TypeScript sources and presentation content remain a reference. This Ada adaptation uses the local protocol libraries and local Markdown memory. See README.md for configuration and migration details.</p></section>
+<script>
+async function refresh(){
+  const host=document.getElementById('instances');
+  try{
+    const list=await(await fetch('/api/instances')).json();
+    host.replaceChildren(...list.map(instance=>{
+      const item=document.createElement('li');const link=document.createElement('a');
+      link.href=`http://127.0.0.1:${instance.port}/`;link.textContent=`${instance.name} · ${instance.ref} · :${instance.port}`;
+      item.append(link);return item;
+    }));
+    if(!list.length)host.textContent='No agents registered. Run make start.';
+  }catch(error){host.textContent=`Cannot read instances: ${error.message}`;}
+}
+refresh();setInterval(refresh,5000);
+</script>
+</body>
+</html>

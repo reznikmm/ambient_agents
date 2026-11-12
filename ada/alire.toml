@@ -1,0 +1,19 @@
+name = "ambient_workshop"
+description = "Ambient agents workshop in Ada using MCP, ACP and Chat Completions"
+version = "0.1.0-dev"
+licenses = "MIT"
+executables = ["ambient_workshop", "ambient_evals"]
+
+[[depends-on]]
+mcp = "*"
+acp = "*"
+chat_completions_api = "*"
+
+[[pins]]
+mcp = { path = "../../mcp" }
+acp = { path = "../../acp" }
+chat_completions_api = { path = "../../chat_completions_api" }
+
+[[actions]]
+type = "test"
+command = ["bash", "tests/run.sh"]
