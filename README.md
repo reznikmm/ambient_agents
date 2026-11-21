@@ -1,63 +1,57 @@
-Ambient_Agents
-========
+# Ambient Agents in Ada
 
 [![Build with Alire](https://github.com/reznikmm/ambient_agents/actions/workflows/alire.yml/badge.svg)](https://github.com/reznikmm/ambient_agents/actions/workflows/alire.yml)
 [![REUSE status](https://api.reuse.software/badge/github.com/reznikmm/ambient_agents)](https://api.reuse.software/info/github.com/reznikmm/ambient_agents)
 
-Ada project ambient_agents packaged as an Alire crate.
+An Ada 2022 port of the Ambient Agents workshop. The workshop starts with
+a chat agent that can use tools, then adds background work triggered by
+GitHub activity and timers. This repository currently contains the step 0
+console scaffold.
 
-## What Is Included
+## Run step 0
 
-This repository is a minimal starting point for an Ada 2022 library project with:
+Install [Alire](https://alire.ada.dev/) and use a GNAT toolchain with Ada 2022
+support. Run this from the repository root.
 
-- a library crate in the repository root
-- a separate testsuite crate in `testsuite/`
-- CI workflows for build/test (`alire.yml`) and REUSE compliance (`reuse.yml`)
-- SPDX and [REUSE](https://reuse.software/) metadata (`REUSE.toml`, `LICENSES/`)
-- helper script `rename.sh` to rename ambient_agents identifiers in copied projects
+```sh
+alr run
+```
 
-Key directories and files:
+Type a message to see the placeholder chat reply. Step 0 runs locally without
+a model server or an API key.
 
-- `source/` - library units (`Ambient_Agents` package)
-- `ambient_agents.gpr` - root GPR project file for the library
-- `alire.toml` - root crate metadata and test action
-- `testsuite/` - separate Alire crate for tests
-- `AGENTS.md` - repository-specific instructions for coding agents
+| Console input | Effect |
+| --- | --- |
+| `/simulate` | Submit a sample CI failure on `main` and show the received event count |
+| `/thread` | Display the visible conversation in order |
+| `/reset` | Clear the conversation and the agent's signal state |
+| `/quit` | Exit the application |
 
-## Requirements
+The console stores visible messages in `Threads.Thread`. `Sessions.Session`
+is the entry point for the model-facing conversation. The simulator submits
+a `Signals.Agent_Event` through `Agents.Ingest`, which records the event.
+The pipeline stage interfaces are in `Prefilters`, `Gates`, `Inboxes`,
+`Workers`, `Policies`, and `Timers`.
 
-- [Alire](https://alire.ada.dev/)
-- GNAT toolchain compatible with Ada 2022
+## Build step 1
 
-## Build And Test
+Give [the step 1 prompt](prompts/step-1.md) to your coding agent. It adds a
+model-backed conversation and a local demo tool using
+[`chat_completions_api`](https://github.com/reznikmm/chat_completions_api).
+The prompt describes provider configuration, the tool loop, and its tests.
 
-From repository root:
+## Build and test
 
 ```sh
 alr build
 alr test
 ```
 
-Run testsuite crate directly:
+The tests live in the separate Alire crate under `testsuite/`. Run them
+directly with `alr -C testsuite/ run`.
 
-```sh
-alr -C testsuite run
-```
+## Maintainer and license
 
-## Using This Ambient_Agents
-
-1. Create a new repository from this ambient_agents.
-2. Run `./rename.sh <your_project_name>` to rename `ambient_agents`/`Ambient_Agents`/`AMBIENT_AGENTS` identifiers.
-3. Adjust crate metadata in `alire.toml`.
-4. Replace `source/ambient_agents.ads` with your actual library units.
-
-Use `./rename.sh --dry-run <your_project_name>` to preview changes.
-
-## Maintainer
-
-[Max Reznik](https://github.com/reznikmm)
-
-## License
-
-Licensed under Apache-2.0 WITH LLVM-exception. See `LICENSES/` and `REUSE.toml`.
-
+Maintained by [Max Reznik](https://github.com/reznikmm). Licensed under
+Apache-2.0 WITH LLVM-exception. See [LICENSES/](LICENSES/) and
+[REUSE.toml](REUSE.toml).

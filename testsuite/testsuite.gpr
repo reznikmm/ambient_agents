@@ -3,6 +3,8 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 with "config/testsuite_config.gpr";
+with "ambient_agents.gpr";
+
 project Testsuite is
 
    for Source_Dirs use ("src/", "config/");

@@ -4,6 +4,9 @@
 ------------------------------------------------------------------
 
 with "config/ambient_agents_config.gpr";
+with "vss_os.gpr";
+with "vss_text.gpr";
+
 project Ambient_Agents is
 
    for Source_Dirs use ("source/", "config/");
@@ -20,6 +23,10 @@ project Ambient_Agents is
    package Binder is
       for Switches ("Ada") use ("-Es"); --  Symbolic traceback
    end Binder;
+
+   package Builder is
+      for Executable ("ambient_agents-run.adb") use "ambient_agents";
+   end Builder;
 
    package Install is
       for Artifacts (".") use ("share");

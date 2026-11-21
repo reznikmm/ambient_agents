@@ -1,56 +1,64 @@
 # AGENTS.md
 
-## Purpose
+## Project scope
 
-Munin is an Ada library for ....
+Ambient Agents is an Ada 2022 port of the Ambient Agents workshop. Step 0
+provides a console demo, a chat stub, and in-memory signal intake. Follow the
+requested workshop step and its prompt. Step 1 adds the model and tool loop.
+See [prompts/step-1.md](prompts/step-1.md).
 
-## Repository Map
+## Repository map
 
-- `source/`: Core library logic (`Ambient_Agents.*` packages)
-- `testsuite/`: Separate test suite crate
-- `config/`: Build-time configuration artifacts written by Alire (do not edit manually)
-- `.obj/`, `.lib/`: Build outputs (do not edit manually)
+| Location | Responsibility |
+| --- | --- |
+| `source/ambient_agents-run.adb` | Console input, commands, and application wiring |
+| `Ambient_Agents.Sessions` | Model-facing conversation and parts emitted for each turn |
+| `Ambient_Agents.Threads` | User-visible transcript of messages and reports |
+| `Ambient_Agents.Signals`, `Ambient_Agents.Agents` | Normalized events and the shared `Agents.Ingest` entry point |
+| `Clocks`, `Prefilters`, `Gates`, `Inboxes`, `Workers`, `Policies`, `Timers` | Workshop clock and pipeline stage interfaces under `Ambient_Agents` |
+| `prompts/` | Instructions and acceptance criteria for workshop steps |
+| `testsuite/` | Separate Alire crate with the tests |
+| `alire.toml`, `ambient_agents.gpr` | Root crate and executable build configuration |
 
-## Ground Rules
+Use `Signals.Agent_Event` and `Agents.Ingest` for every source, including the
+simulator, GitHub, and timers. Keep model history in `Sessions.Session` and
+visible messages in `Threads.Thread`. The step 1 model client is
+`chat_completions_api`, with a replaceable HTTP request handler for tests.
 
-- Don't suppress exception with `null;` exception handler
-   (one exception is `Libadalang.Common.Property_Error`).
-- Don't introduce extra (sub-)type conversions, like Integer to Natural.
-- Preserve existing style and naming conventions in nearby code. Don't use abbreviations.
+## Ada conventions
 
-## Build And Test Commands
+- Follow the naming, formatting, and declaration comments in nearby code.
+  Use descriptive names and Ada 2022 features where they help.
+- Use `VSS.Strings.Virtual_String` for Unicode text and predefined Ada
+  containers. Avoid indefinite containers and unnecessary type conversions.
+- Handle exceptions with diagnostics that identify the failing operation and
+  include useful context. Avoid empty exception handlers.
+- Treat `alire/`, `config/`, `.obj/`, and `bin/` as generated directories.
+  Make build and dependency changes in the project or crate configuration.
 
-Run from repository root unless noted otherwise.
+## Build and check
 
-- Compile core library:
-  - `alr build`
-- Compile/check one file (`<unit>.adb`):
-  - `alr exec -- gprbuild -q -f -c -u -gnatc -P ambient_agents.gpr <unit>.adb '-cargs:ada' -gnatef`
-- Fix code style warnings, force code style after edit:
-  - `alr exec -- gnatformat --charset=utf-8 --no-subprojects -P ambient_agents.gpr`
-- Build and run testsuite:
-  - `alr -C testsuite/ run`
+Run these commands from the repository root.
 
-## Change Workflow For Agents
+```sh
+alr build
+alr -C testsuite/ run
+```
 
-1. Read relevant package spec/body before editing. Read `*.adb` only if reading of corresponding `*.ads` is not enough.
-2. Implement the smallest viable patch.
-3. Re-run compile check for touched units.
-4. Run targeted runtime/test command when behavior changes.
-5. Report exactly what changed and what was validated.
+For a focused compile check, replace `<unit>.adb` with the Ada file to check.
 
-## Ada-Specific Notes
+```sh
+alr exec -- gprbuild -q -f -c -u -gnatc -P ambient_agents.gpr <unit>.adb '-cargs:ada' -gnatef
+```
 
-- Use predefined Ada container packages
-  (for example, `Ada.Containers.Hashed_Sets`). Don't use Indefinite containers.
-- Use Ada 2022 syntax if you can.
+Format edited Ada sources with GNATformat.
 
-## Output And Error Handling Expectations
+```sh
+alr exec -- gnatformat --charset=utf-8 --no-subprojects -P ambient_agents.gpr
+```
 
-- Diagnostics should be actionable and include path/context when possible.
-
-## When Unsure
-
-- Prefer conservative changes.
-- Ask for clarification before large architectural rewrites.
-- Document assumptions in the final update.
+Read the relevant package specifications first, then inspect bodies as needed.
+Keep patches focused. Compile touched units, including stage interfaces that
+the executable does not yet import. For behavior changes, run the relevant
+tests or CLI scenario and report what passed. Ask before a large architectural
+rewrite and record any assumptions in the final update.
