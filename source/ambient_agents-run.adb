@@ -4,6 +4,7 @@
 ------------------------------------------------------------------
 
 with Ada.Characters.Latin_1;
+with Ada.Environment_Variables;
 with Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 
@@ -15,6 +16,7 @@ with VSS.Text_Streams.Standards;
 
 with Ambient_Agents.Agents;
 with Ambient_Agents.Clocks;
+with Ambient_Agents.HTTP_Requests;
 with Ambient_Agents.Sessions;
 with Ambient_Agents.Signals;
 with Ambient_Agents.Threads;
@@ -30,6 +32,7 @@ procedure Ambient_Agents.Run is
    Clock   : Clocks.Clock;
    Session : Sessions.Session;
    Thread  : Threads.Thread;
+   HTTP    : aliased HTTP_Requests.HTTP_Request;
 
    Output : VSS.Text_Streams.Output_Text_Stream'Class :=
      VSS.Text_Streams.Standards.Standard_Output;
@@ -107,16 +110,17 @@ procedure Ambient_Agents.Run is
    end Read_Line;
 
    procedure Send (Message : Virtual_String) is
-      Answer : Virtual_String;
-
       procedure Show (Part : Sessions.Chat_Part);
-      --  Collect reply text and display tool activity and errors.
+      --  Record assistant replies and display tool activity and errors.
 
       procedure Show (Part : Sessions.Chat_Part) is
       begin
          case Part.Kind is
             when Sessions.Text                             =>
-               Answer.Append (Part.Content);
+               Print ("Agent: " & Part.Content, Output);
+               Thread.Append
+                 (Threads.Message'
+                    (From => Threads.Assistant, Content => Part.Content));
 
             when Sessions.Tool_Call | Sessions.Tool_Result =>
                Print (Part.Tool_Name & ": " & Part.Payload, Output);
@@ -125,12 +129,7 @@ procedure Ambient_Agents.Run is
                Print (Part.Content, Errors);
 
             when Sessions.Done                             =>
-               if not Answer.Is_Empty then
-                  Print ("Agent: " & Answer, Output);
-                  Thread.Append
-                    (Threads.Message'
-                       (From => Threads.Assistant, Content => Answer));
-               end if;
+               null;
          end case;
       end Show;
    begin
@@ -187,8 +186,26 @@ begin
    VSS.Command_Line.Add_Help_Option;
    VSS.Command_Line.Process;
 
+   declare
+      use Ada.Environment_Variables;
+
+      URL   : constant Virtual_String :=
+        To_Virtual_String (Value ("CHAT_COMPLETIONS_URL", ""));
+      Model : constant Virtual_String :=
+        To_Virtual_String (Value ("CHAT_COMPLETIONS_MODEL", ""));
+      Key   : constant Virtual_String :=
+        To_Virtual_String (Value ("CHAT_COMPLETIONS_API_KEY", ""));
+   begin
+      Sessions.Configure
+        (Session,
+         URL             => URL,
+         Model           => Model,
+         Request_Handler => HTTP'Unchecked_Access,
+         API_Key         => Key);
+   end;
+
    Print
-     ("Ambient Agents step-0. Type a message or /simulate, /thread,"
+     ("Ambient Agents step-1. Type a message or /simulate, /thread,"
       & " /reset, /quit.",
       Output);
 

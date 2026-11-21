@@ -8,49 +8,10 @@ with Ada.Containers;
 with VSS.Strings;
 
 with Ambient_Agents.Agents;
-with Ambient_Agents.Sessions;
 with Ambient_Agents.Signals;
 with Ambient_Agents.Threads;
 
 package body Test_Init is
-
-   procedure Test_Chat_Stub (Op : in out Trendy_Test.Operation'Class) is
-      use Ambient_Agents.Sessions;
-
-      Conversation : Session;
-      Parts        : Natural := 0;
-
-      procedure Check (Part : Chat_Part);
-
-      procedure Check (Part : Chat_Part) is
-      begin
-         Parts := @ + 1;
-
-         case Parts is
-            when 1      =>
-               Op.Assert (Part.Kind = Text);
-
-               if Part.Kind = Text then
-                  Op.Assert
-                    (Part.Content.Ends_With ("See prompts/step-1.md."));
-               end if;
-
-            when 2      =>
-               Op.Assert (Part.Kind = Done);
-
-            when others =>
-               Op.Assert (Parts <= 2);
-         end case;
-      end Check;
-   begin
-      Op.Register (Parallelize => False);
-      Send (Conversation, "Hello", Check'Access);
-      Op.Assert (Parts = 2);
-      Reset (Conversation);
-      Parts := 0;
-      Send (Conversation, "Hello again", Check'Access);
-      Op.Assert (Parts = 2);
-   end Test_Chat_Stub;
 
    procedure Test_Ingest_And_Reset (Op : in out Trendy_Test.Operation'Class) is
       use Ambient_Agents.Agents;

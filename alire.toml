@@ -24,3 +24,8 @@ command = ["alr", "-C" , "testsuite", "run"]
 
 [[depends-on]]
 vss_extra = "^26.2.0"
+chat_completions_api = "~0.1.0-dev"
+curl = "*"
+
+[[pins]]
+chat_completions_api = { url = "https://github.com/reznikmm/chat_completions_api.git", commit = "02388304bd56155b83a1d7c24671aa5050a87f3f" }

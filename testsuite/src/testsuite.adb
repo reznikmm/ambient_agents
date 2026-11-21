@@ -2,12 +2,18 @@
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+with Test_Chat;
 with Test_Init;
 with Trendy_Test.Reports;
 
 procedure Testsuite is
    Tests : constant Trendy_Test.Test_Group :=
-     [Test_Init.Test_Chat_Stub'Access,
+     [Test_Chat.Test_Text_And_Reset'Access,
+      Test_Chat.Test_Tool_Round_Trip'Access,
+      Test_Chat.Test_Tool_Errors'Access,
+      Test_Chat.Test_Provider_Errors'Access,
+      Test_Chat.Test_Request_Limit'Access,
+      Test_Chat.Test_Missing_Settings'Access,
       Test_Init.Test_Ingest_And_Reset'Access,
       Test_Init.Test_Thread'Access];
 begin

@@ -6,8 +6,6 @@ with Trendy_Test;
 
 package Test_Init is
 
-   procedure Test_Chat_Stub (Op : in out Trendy_Test.Operation'Class);
-
    procedure Test_Ingest_And_Reset (Op : in out Trendy_Test.Operation'Class);
 
    procedure Test_Thread (Op : in out Trendy_Test.Operation'Class);

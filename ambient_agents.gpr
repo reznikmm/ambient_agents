@@ -4,6 +4,8 @@
 ------------------------------------------------------------------
 
 with "config/ambient_agents_config.gpr";
+with "chat_completions_api.gpr";
+with "vss_json.gpr";
 with "vss_os.gpr";
 with "vss_text.gpr";
 

@@ -5,6 +5,9 @@
 
 with VSS.Strings;
 
+with Chat_Completions_API;
+private with Chat_Completions_API.Types;
+
 package Ambient_Agents.Sessions is
 
    type Part_Kind is (Text, Tool_Call, Tool_Result, Error, Done);
@@ -29,18 +32,35 @@ package Ambient_Agents.Sessions is
    type Session is private;
    --  The model-facing conversation state for one dialogue.
 
+   procedure Configure
+     (Self            : in out Session;
+      URL             : VSS.Strings.Virtual_String;
+      Model           : VSS.Strings.Virtual_String;
+      Request_Handler : not null Chat_Completions_API.HTTP_Request_Access;
+      API_Key         : VSS.Strings.Virtual_String :=
+        VSS.Strings.Empty_Virtual_String);
+   --  Set the connection settings. The handler must outlive its use by Self.
+
    procedure Send
      (Self    : in out Session;
       Message : VSS.Strings.Virtual_String;
       Emit    : not null access procedure (Part : Chat_Part));
    --  Process one user message. Call Emit synchronously for each part and
-   --  finish with Done. Step 0 emits a placeholder reply.
+   --  finish with Done. Commit the model history on a completed turn.
 
    procedure Reset (Self : in out Session);
    --  Clear the model-facing conversation history.
 
 private
 
-   type Session is null record;
+   type Session is record
+      URL             : VSS.Strings.Virtual_String;
+      Model           : VSS.Strings.Virtual_String;
+      API_Key         : VSS.Strings.Virtual_String;
+      Request_Handler : Chat_Completions_API.HTTP_Request_Access;
+      History         :
+        Chat_Completions_API.Types.ChatCompletionRequestMessage_Vector;
+      --  Completed turns, preceded by the most recent system message.
+   end record;
 
 end Ambient_Agents.Sessions;

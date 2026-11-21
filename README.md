@@ -5,20 +5,25 @@
 
 An Ada 2022 port of the Ambient Agents workshop. The workshop starts with
 a chat agent that can use tools, then adds background work triggered by
-GitHub activity and timers. This repository currently contains the step 0
-console scaffold.
+GitHub activity and timers. This repository contains the Step 1 chat loop
+and the Step 0 signal simulator.
 
-## Run step 0
+## Run Step 1
 
 Install [Alire](https://alire.ada.dev/) and use a GNAT toolchain with Ada 2022
-support. Run this from the repository root.
+support. The console uses `curl` for HTTP and HTTPS. Run this from the
+repository root with a tool-capable Chat Completions model.
 
 ```sh
+export CHAT_COMPLETIONS_URL=http://localhost:8080/v1/chat/completions
+export CHAT_COMPLETIONS_MODEL=local-model
 alr run
 ```
 
-Type a message to see the placeholder chat reply. Step 0 runs locally without
-a model server or an API key.
+Use the full endpoint URL and the model identifier your server accepts.
+Set `CHAT_COMPLETIONS_API_KEY` if the server requires a key. Ask “What open
+issues do we have, and which one would you pick first?” to try the local
+`list_open_issues` tool, then ask a follow-up about the issue it picked.
 
 | Console input | Effect |
 | --- | --- |
@@ -33,12 +38,7 @@ a `Signals.Agent_Event` through `Agents.Ingest`, which records the event.
 The pipeline stage interfaces are in `Prefilters`, `Gates`, `Inboxes`,
 `Workers`, `Policies`, and `Timers`.
 
-## Build step 1
-
-Give [the step 1 prompt](prompts/step-1.md) to your coding agent. It adds a
-model-backed conversation and a local demo tool using
-[`chat_completions_api`](https://github.com/reznikmm/chat_completions_api).
-The prompt describes provider configuration, the tool loop, and its tests.
+The [Step 1 prompt](prompts/step-1.md) describes the tool loop and its tests.
 
 ## Build and test
 
