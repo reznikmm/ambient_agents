@@ -800,7 +800,7 @@ package body Ambient.Server is
                   then "agents.html"
                   elsif Path = "/stage-chapters.js"
                   then "stage-chapters.js"
-                  else Path (2 .. Path'Last) & ".html");
+                  else Path (Path'First + 1 .. Path'Last) & ".html");
             begin
                Respond
                  (Socket,

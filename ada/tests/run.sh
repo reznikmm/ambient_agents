@@ -52,6 +52,10 @@ get() { curl -fsS "http://127.0.0.1:$PORT$1"; }
 start_server
 get / > "$temporary/app.html"
 rg -q 'text/html|<!DOCTYPE|<!doctype' "$temporary/app.html"
+get /stage > "$temporary/stage.html"
+rg -Fq '<title>Workshop stage</title>' "$temporary/stage.html"
+get '/db?instance=stage&embed=1' > "$temporary/db.html"
+rg -Fq '<title>Agent storage</title>' "$temporary/db.html"
 post /api/trigger '{"scenario":"ci-failed"}' | jq -e '.injected==1' >/dev/null
 sleep .5
 get /api/state | jq -e '.stats.workerRuns==1 and .stats.sessions==1 and (.wakeups|length)==1' >/dev/null
